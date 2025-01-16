@@ -1,0 +1,34 @@
+.nav {
+    border: var(--yellow-border);
+    background-color: var(--color-main-yellow-faded);
+    border-radius: var(--radius-sm);
+    width: 18rem;
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+}
+
+.nav ul {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    font-size: 1.2rem;
+}
+
+.nav li {
+    width: 100%;
+    /* padding: 0.5rem; */
+    border-radius: var(--radius-sm);
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.nav li a {
+    padding: 0.5rem;
+    width: 100%;
+    border-radius: var(--radius-sm);
+    display: inline-block;
+}
+
+.nav :global(.active) {
+    background-color: var(--color-main-yellow);
+}
