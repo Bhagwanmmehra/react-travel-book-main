@@ -1,4 +1,4 @@
-const baseURL = `http://localhost:3000/`;
+const baseURL = `http://localhost:3000`;
 
 export async function getCities() {
     const response = await fetch(`${baseURL}/cities`, {
@@ -27,8 +27,8 @@ export async function createCity(newCity) {
     return data;
 }
 
-export async function updateCity(updatedCity) {
-    const response = await fetch(`${baseURL}/cities`, {
+export async function updateCity(id, updatedCity) {
+    const response = await fetch(`${baseURL}/cities/${id}`, {
         method: "PATCH",
         header: { "content-Type": "application/json" },
         body: updatedCity,
@@ -37,11 +37,9 @@ export async function updateCity(updatedCity) {
     return data;
 }
 
-export async function deleteCity(deletedCity) {
-    const response = await fetch(`${baseURL}/cities`, {
-        method: "PATCH",
-        header: { "content-Type": "application/json" },
-        body: deletedCity,
+export async function deleteCity(id) {
+    const response = await fetch(`${baseURL}/cities/${id}`, {
+        method: "DELETE",
     });
     const data = await response.json();
     return data;

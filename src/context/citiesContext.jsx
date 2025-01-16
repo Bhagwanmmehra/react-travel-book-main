@@ -1,84 +1,154 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useReducer } from "react";
+import {
+    createCity,
+    deleteCity,
+    getCities,
+    getCity,
+} from "../services/apiCities";
 
 const CitiesContext = createContext();
 
-const tempCities = [
-    {
-        cityName: "Devdaha",
-        country: "Nepal",
-        emoji: "🇳🇵",
-        date: "2024-10-26T04:53:08.130Z",
-        notes: "This is a note about Devdaha",
-        position: {
-            lat: "27.60323689456203",
-            lng: "83.55926513671876",
-        },
-        id: 3,
-    },
-    {
-        cityName: "Boalmari",
-        country: "Bangladesh",
-        emoji: "🇧🇩",
-        date: "2024-10-26T04:53:34.170Z",
-        notes: "This is a note about Boalmari",
-        position: {
-            lat: "23.36242859340884",
-            lng: "89.747314453125",
-        },
-        id: 4,
-    },
-    {
-        cityName: "Athang Gewog",
-        country: "Bhutan",
-        emoji: "🇧🇹",
-        date: "2024-10-26T04:54:54.493Z",
-        notes: "This is a note about Athang Gewog",
-        position: {
-            lat: "27.293689224852407",
-            lng: "90.24169921875001",
-        },
-        id: 7,
-    },
-    {
-        cityName: "Raipur",
-        country: "India",
-        emoji: "🇮🇳",
-        date: "2024-11-06T08:43:16.000Z",
-        notes: "This is all about Raipur",
-        position: {
-            lat: "21.23673002019399",
-            lng: "81.63459777832033",
-        },
-        id: 11,
-    },
-    {
-        cityName: "Burao",
-        country: "Somalia",
-        emoji: "🇸🇴",
-        date: "2024-08-20T16:47:10.000Z",
-        notes: "This is all about Burao, lskjlakjflskj j...",
-        position: {
-            lat: "9.060058316542385",
-            lng: "45.97503662109375",
-        },
-        id: 13,
-    },
-    {
-        cityName: "Jeffrey City",
-        country: "United States of America (the)",
-        emoji: "🇺🇸",
-        date: "2025-01-11T05:46:51.036Z",
-        notes: "This is all about Jeffrey City",
-        position: {
-            lat: "42.85456125392396",
-            lng: "-107.8490063777907",
-        },
-        id: 14,
-    },
-];
+const initialState = {
+    cities: [],
+    city: null,
+    loading: false,
+    error: null,
+};
+
+const reducer = function (cState, action) {
+    switch (action.type) {
+        case "cities/load": {
+            const cities = action.payload;
+            return { ...cState, cities: cities, loading: false };
+        }
+
+        case "city/load": {
+            const city = action.payload;
+            return { ...cState, city: city, loading: false };
+        }
+
+        case "city/update": {
+            const id = action.payload.id;
+            const newCity = action.payload.newCity;
+
+            return {
+                ...cState,
+                cities: cState.cities.map(function (city) {
+                    if (city.id === id) return newCity;
+                    else return city;
+                }),
+                loading: false,
+            };
+        }
+
+        case "city/delete": {
+            const id = action.payload;
+            return {
+                ...cState,
+                cities: cState.cities.filter(function (city) {
+                    if (city.id === id) return false;
+                    else return true;
+                }),
+                loading: false,
+            };
+        }
+
+        case "city/create": {
+            const newCity = action.payload;
+            return {
+                ...cState,
+                cities: [...cState.cities, newCity],
+                loading: false,
+            };
+        }
+        case "reject": {
+            const error = action.payload;
+            return {
+                ...cState,
+                error: error,
+                loading: false,
+            };
+        }
+
+        case "loading": {
+            return { ...cState, loading: false };
+        }
+        default:
+            return new Error(
+                "no action found with the name : `${action.type}`"
+            );
+    }
+};
 
 const CitiesProvider = function ({ children }) {
-    const valuesObj = { cities: tempCities };
+    const [state, dispatch] = useReducer(reducer, initialState);
+    const { cities, city, loading, error } = state;
+    console.log(cities);
+
+    useEffect(function () {
+        async function fetchCities() {
+            try {
+                dispatch({ type: "loading" });
+                const data = await getCities();
+                dispatch({ type: "cities/load", payload: data });
+            } catch (error) {
+                dispatch({ type: "error", payload: error.message });
+            }
+        }
+        fetchCities();
+    }, []);
+
+    // to load city
+    async function handleLoadCity(id) {
+        try {
+            dispatch({ type: "loading" });
+            const data = await getCity(id);
+            dispatch({ type: "city/load", payload: data });
+        } catch (error) {
+            dispatch({ type: "error", payload: error.message });
+        }
+    }
+
+    async function handleAddCity(newCity) {
+        try {
+            dispatch({ type: "loading" });
+            const data = await createCity(newCity);
+            dispatch({ type: "city/create", payload: data });
+        } catch (error) {
+            dispatch({ type: "error", payload: error.message });
+        }
+    }
+
+    async function handleRemoveCity(id) {
+        try {
+            dispatch({ type: "loading" });
+            await deleteCity(id);
+            dispatch({ type: "city/delete", payload: id });
+        } catch (error) {
+            dispatch({ type: "error", payload: error.message });
+        }
+    }
+
+    async function handleEditCity(id, updatedCity) {
+        try {
+            dispatch({ type: "loading" });
+            const data = await updatedCity(id, updatedCity);
+            dispatch({ type: "city/update", payload: data });
+        } catch (error) {
+            dispatch({ type: "error", payload: error.message });
+        }
+    }
+
+    const valuesObj = {
+        cities: cities,
+        city: city,
+        loading: loading,
+        error: error,
+        handleLoadCity: handleLoadCity,
+        handleAddCity: handleAddCity,
+        handleRemoveCity: handleRemoveCity,
+        handleEditCity: handleEditCity,
+    };
 
     return (
         <CitiesContext.Provider value={valuesObj}>
